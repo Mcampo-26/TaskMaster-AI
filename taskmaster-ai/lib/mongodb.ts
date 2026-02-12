@@ -7,7 +7,7 @@ if (!process.env.MONGODB_URI) {
 const uri = process.env.MONGODB_URI;
 const options = {};
 
-let client;
+let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
 if (process.env.NODE_ENV === 'development') {
@@ -21,7 +21,8 @@ if (process.env.NODE_ENV === 'development') {
     client = new MongoClient(uri, options);
     globalWithMongo._mongoClientPromise = client.connect();
   }
-  clientPromise = globalWithMongo._mongoClientPromise;
+  // Usamos el operador "!" para asegurar a TS que no es undefined
+  clientPromise = globalWithMongo._mongoClientPromise!;
 } else {
   // En producción, es mejor no usar una variable global.
   client = new MongoClient(uri, options);
