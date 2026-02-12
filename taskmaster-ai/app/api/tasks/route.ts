@@ -22,12 +22,10 @@ export async function POST(request: Request) {
   try {
     const client = await clientPromise;
     const db = client.db("TaskMasterAI");
-
-    // Extraemos los datos del cuerpo
-    const body: ITask = await request.json();
-
-    // Eliminamos el _id si viene en el body para que MongoDB no se confunda
-    // y forzamos el tipado a "any" solo para la inserción
+    
+    const body = await request.json();
+    
+    // Extraemos el _id para que MongoDB genere uno nuevo automáticamente
     const { _id, ...taskData } = body;
 
     const newTask = {
@@ -35,15 +33,12 @@ export async function POST(request: Request) {
       createdAt: new Date(),
     };
 
+    // Usamos "as any" en insertOne para evitar el conflicto de tipos de TS
     const result = await db.collection("tasks").insertOne(newTask as any);
 
-    return NextResponse.json({
-      ...newTask,
-      _id: result.insertedId
-    }, { status: 201 });
-
+    return NextResponse.json({ ...newTask, _id: result.insertedId }, { status: 201 });
   } catch (e) {
+    console.error("Error en POST:", e);
     return NextResponse.json({ error: "Error al crear la tarea" }, { status: 500 });
   }
-
 }
