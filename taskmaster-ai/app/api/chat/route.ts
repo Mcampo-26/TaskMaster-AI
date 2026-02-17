@@ -4,28 +4,48 @@ import clientPromise from '@/lib/mongodb';
 export async function POST(request: Request) {
   try {
     const { message } = await request.json();
+    const apiKey = process.env.GEMINI_API_KEY;
 
-    // 1. Conectamos a la DB y traemos las tareas
+    // 1. Conexión a MongoDB y obtención de tareas
     const client = await clientPromise;
     const db = client.db("TaskMasterAI");
     const tasks = await db.collection("tasks").find({}).toArray();
 
-    // 2. Creamos un resumen de las tareas para la "IA"
-    const tareasListadas = tasks.map(t => `- ${t.title} (${t.priority})`).join('\n');
+    // 2. Crear el contexto para la IA
+    const listaTareas = tasks.map(t => `- ${t.title} (Prioridad: ${t.priority || 'N/A'})`).join("\n");
+    
+    const promptCompleto = `
+      Eres un asistente de productividad personal. 
+      Esta es la lista actual de tareas del usuario:
+      ${listaTareas}
 
-    // 3. Simulamos la respuesta lógica usando el contexto de las tareas
-    // Más adelante, aquí enviaremos 'tareasListadas' a OpenAI/Gemini
-    let aiResponse = "";
+      El usuario dice: ${message}
+    `;
 
-    if (message.toLowerCase().includes("tareas")) {
-      aiResponse = `Actualmente tienes ${tasks.length} tareas en tu lista:\n${tareasListadas}`;
-    } else {
-      aiResponse = `Entiendo. Sobre tus ${tasks.length} tareas actuales, ¿hay alguna en particular que quieras revisar o priorizar?`;
+    // 3. Petición a Gemini 2.5 Flash
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: promptCompleto }]
+        }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json({ error: "Error de IA", detail: data.error?.message }, { status: response.status });
     }
 
+    const aiResponse = data.candidates[0].content.parts[0].text;
     return NextResponse.json({ text: aiResponse });
-  } catch (error) {
-    console.error("Error en el chat:", error);
-    return NextResponse.json({ error: "Error al consultar tareas" }, { status: 500 });
+
+  } catch (error: any) {
+    console.error("ERROR EN API/CHAT:", error);
+    return NextResponse.json({ error: "Error interno", detail: error.message }, { status: 500 });
   }
 }

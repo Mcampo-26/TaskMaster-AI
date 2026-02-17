@@ -1,7 +1,12 @@
 "use client";
 import { useState } from 'react';
 
-export default function ChatPanel() {
+interface ChatPanelProps {
+  tasks: any[];
+  onTaskUpdated: () => void;
+}
+
+export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -16,15 +21,59 @@ export default function ChatPanel() {
     setIsTyping(true);
 
     try {
+      // 1. Enviamos el mensaje a la IA
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg }),
+        body: JSON.stringify({ 
+          message: userMsg, 
+          currentTasks: tasks 
+        }),
       });
+      
       const data = await res.json();
-      setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
+
+      // 2. LÓGICA DE ACCIONES (Individual vs Masiva)
+      
+      // CASO A: UNA SOLA TAREA (UPDATE_TASK)
+      if (data.action === "UPDATE_TASK") {
+        const updateRes = await fetch(`/api/tasks/${data.taskId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data.update), // Usamos 'update' que viene de la IA
+        });
+
+        if (updateRes.ok) {
+          onTaskUpdated();
+          setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
+        }
+      } 
+      
+      // CASO B: TODAS LAS TAREAS (BULK_UPDATE)
+      else if (data.action === "BULK_UPDATE") {
+        const bulkRes = await fetch('/api/tasks/bulk', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            filter: {}, // Afecta a todas
+            update: data.update 
+          }),
+        });
+
+        if (bulkRes.ok) {
+          onTaskUpdated();
+          setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
+        }
+      } 
+      
+      // CASO C: CHARLA NORMAL
+      else {
+        setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
+      }
+
     } catch (error) {
       console.error("Error en chat:", error);
+      setMessages(prev => [...prev, { role: 'ai', text: "Lo siento, hubo un error de conexión." }]);
     } finally {
       setIsTyping(false);
     }
@@ -40,6 +89,12 @@ export default function ChatPanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {messages.length === 0 && (
+          <div className="text-center text-slate-500 text-xs py-10">
+            Prueba decir: <br/> 
+            <span className="italic">"Pon todas las tareas en prioridad Alta"</span>
+          </div>
+        )}
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
@@ -49,7 +104,7 @@ export default function ChatPanel() {
             </div>
           </div>
         ))}
-        {isTyping && <div className="text-xs text-slate-500 animate-bounce">IA escribiendo...</div>}
+        {isTyping && <div className="text-xs text-slate-500 animate-pulse pl-2">IA procesando...</div>}
       </div>
 
       <form onSubmit={sendMessage} className="p-6 border-t border-slate-800/50">
@@ -57,7 +112,7 @@ export default function ChatPanel() {
           type="text" 
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Pregúntale algo a la IA..." 
+          placeholder="Escribe aquí..." 
           className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-4 focus:border-blue-500 outline-none text-sm transition-all text-white"
         />
       </form>
