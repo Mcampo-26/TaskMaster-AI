@@ -14,66 +14,69 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-
+  
     const userMsg = input;
     setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsTyping(true);
-
+  
     try {
-      // 1. Enviamos el mensaje a la IA
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          message: userMsg, 
-          currentTasks: tasks 
+          message: userMsg
         }),
       });
-      
+  
       const data = await res.json();
-
-      // 2. LÓGICA DE ACCIONES (Individual vs Masiva)
-      
-      // CASO A: UNA SOLA TAREA (UPDATE_TASK)
+      console.log(
+        "Texto Gemini:",
+        data?.candidates?.[0]?.content?.parts?.[0]?.text
+      );
+  
+      if (!res.ok) {
+        throw new Error(data.error || "Error del servidor");
+      }
+  
+      // 🔒 Protección por si text viene undefined
+      const aiText = data?.text || "La IA no devolvió respuesta.";
+  
+      // Si algún día devolvés acciones, esto queda listo
       if (data.action === "UPDATE_TASK") {
         const updateRes = await fetch(`/api/tasks/${data.taskId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data.update), // Usamos 'update' que viene de la IA
+          body: JSON.stringify(data.update),
         });
-
+  
         if (updateRes.ok) {
           onTaskUpdated();
-          setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
         }
       } 
-      
-      // CASO B: TODAS LAS TAREAS (BULK_UPDATE)
       else if (data.action === "BULK_UPDATE") {
         const bulkRes = await fetch('/api/tasks/bulk', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            filter: {}, // Afecta a todas
+            filter: {},
             update: data.update 
           }),
         });
-
+  
         if (bulkRes.ok) {
           onTaskUpdated();
-          setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
         }
-      } 
-      
-      // CASO C: CHARLA NORMAL
-      else {
-        setMessages(prev => [...prev, { role: 'ai', text: data.text }]);
       }
-
+  
+      setMessages(prev => [...prev, { role: 'ai', text: aiText }]);
+  
     } catch (error) {
       console.error("Error en chat:", error);
-      setMessages(prev => [...prev, { role: 'ai', text: "Lo siento, hubo un error de conexión." }]);
+      setMessages(prev => [
+        ...prev,
+        { role: 'ai', text: "Lo siento, hubo un error de conexión." }
+      ]);
     } finally {
       setIsTyping(false);
     }
