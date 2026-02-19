@@ -52,20 +52,20 @@ export default function ChatPanel({ onTaskUpdated }: ChatPanelProps) {
   return (
     <aside className="hidden lg:flex w-[400px] bg-slate-900/30 border-l border-slate-800/50 backdrop-blur-xl flex-col h-screen">
       <div className="p-6 border-b border-slate-800/50">
-        <h2 className="text-xl font-bold flex items-center gap-3 text-white">
-          <span className="h-3 w-3 rounded-full bg-blue-500 animate-pulse"></span>
-          Asistente TaskMaster
-        </h2>
-      </div>
+      <h2 className="text-2xl font-extrabold flex items-center gap-3 text-white">
+    <span className="h-3 w-3 rounded-full bg-blue-500 animate-pulse"></span>
+    Asistente TaskMaster
+  </h2>
+</div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.length === 0 && (
-          <div className="text-center text-slate-500 text-xs py-10">
-            Prueba decir:
-            <br />
-            <span className="italic">
-              "Pon todas las tareas en prioridad Alta"
-            </span>
+<div className="flex-1 overflow-y-auto p-6 space-y-4 bg-blue-900">
+  {messages.length === 0 && (
+    <div className="text-center text-white text-sm py-10">
+      Prueba decir:
+      <br />
+      <span className="italic text-white/90">
+        "Pon todas las tareas en prioridad Alta"
+      </span>
           </div>
         )}
 

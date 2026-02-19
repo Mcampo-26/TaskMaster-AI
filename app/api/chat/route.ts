@@ -4,6 +4,7 @@ import clientPromise from "@/lib/mongodb";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY); // 👈 acá
   try {
     const { message } = await request.json();
 
