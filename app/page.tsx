@@ -51,7 +51,8 @@ export default function KanbanDashboard() {
 
   return (
     /* FONDO: Azul Trello Clásico */
-    <div className="flex h-screen bg-[#0079bf] text-slate-900 overflow-hidden font-sans">
+    <div className="flex flex-col lg:flex-row h-screen bg-[#0079bf] text-slate-900 font-sans">
+
       
       <main className="flex-1 flex flex-col min-w-0">
         

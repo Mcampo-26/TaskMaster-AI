@@ -50,7 +50,13 @@ export default function ChatPanel({ onTaskUpdated }: ChatPanelProps) {
   };
 
   return (
-    <aside className="hidden lg:flex w-[400px] bg-slate-900/30 border-l border-slate-800/50 backdrop-blur-xl flex-col h-screen">
+    <aside className="flex flex-col w-full lg:w-[400px] 
+    h-[45vh] lg:h-screen 
+    bg-slate-900/30 
+    border-t lg:border-t-0 lg:border-l 
+    border-slate-800/50 
+    backdrop-blur-xl">
+
       <div className="p-6 border-b border-slate-800/50">
       <h2 className="text-2xl font-extrabold flex items-center gap-3 text-white">
     <span className="h-3 w-3 rounded-full bg-blue-500 animate-pulse"></span>
