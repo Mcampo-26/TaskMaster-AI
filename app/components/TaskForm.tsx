@@ -12,6 +12,7 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<ITask['priority']>('medium');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [isMagicLoading, setIsMagicLoading] = useState(false);
 
   // --- FUNCIÓN DE IA MAGIC ---
