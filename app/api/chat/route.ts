@@ -12,13 +12,13 @@ export async function POST(request: Request) {
     const db = client.db("TaskMasterAI");
     const tasks = await db.collection("tasks").find({}).toArray();
 
-    // Incluimos el ID para que la IA sepa exactamente qué borrar o mover
     const listaTareas = tasks
       .map((t) => `- ${t.title} | ID: ${t._id.toString()} | Estado: ${t.status}`)
       .join("\n");
 
     const promptCompleto = `
 Actúa como un sistema de gestión de tareas.
+Fecha de hoy: ${new Date().toISOString().split('T')[0]}
 Tareas actuales:
 ${listaTareas}
 
@@ -30,12 +30,15 @@ Debes responder ÚNICAMENTE un objeto JSON con este formato:
   "action": "CREATE_TASK" | "UPDATE_STATUS" | "DELETE_TASK" | "EDIT_TASK" | "NONE",
   "payload": {
     "id": "ID_DE_LA_TAREA_CORRESPONDIENTE",
-    "status": "completed",
-    "title": "nombre si es nueva"
+    "status": "pending",
+    "title": "nombre de la tarea",
+    "priority": "high" | "medium" | "low",
+    "dueDate": "YYYY-MM-DD"
   }
 }
 Si el usuario dice "listo" o "terminado", la acción es UPDATE_STATUS y status es "completed".
 Si pide borrar, la acción es DELETE_TASK.
+Para nuevas tareas, intenta extraer la prioridad (high/medium/low) y la fecha (YYYY-MM-DD). Si no hay fecha, usa null.
 `;
 
     const response = await fetch(
@@ -45,7 +48,6 @@ Si pide borrar, la acción es DELETE_TASK.
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: promptCompleto }] }],
-          // Forzamos a que la respuesta sea JSON puro
           generationConfig: { responseMimeType: "application/json" }
         }),
       }
@@ -56,7 +58,6 @@ Si pide borrar, la acción es DELETE_TASK.
 
     const aiRawResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     
-    // Devolvemos el JSON que generó la IA
     return NextResponse.json(JSON.parse(aiRawResponse));
 
   } catch (error: any) {
