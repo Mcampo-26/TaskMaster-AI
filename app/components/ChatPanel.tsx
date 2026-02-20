@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Mic, MicOff, Send, Volume2, VolumeX } from "lucide-react";
+import { Send, Sparkles, Mic, MicOff, Volume2, VolumeX, Activity, ChevronDown, ChevronUp } from "lucide-react";
+import * as ai from "@/lib/aiActions";
 
 declare global {
   interface Window {
@@ -20,6 +21,7 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
 
   const startListening = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return alert("Navegador no compatible");
+    if (!SpeechRecognition) return alert("Navegador no compatible con voz");
     
     const recognition = new SpeechRecognition();
     recognition.lang = "es-ES";
@@ -39,6 +41,32 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
     };
     recognition.onerror = () => setIsListening(false);
     recognition.start();
+  };
+
+  const executeAiAction = async (data: any) => {
+    let success = false;
+    try {
+      switch (data.action) {
+        case "CREATE_TASK":
+          success = await ai.aiCreateTask(data.payload.title);
+          break;
+        case "UPDATE_STATUS":
+          success = await ai.aiUpdateTask(data.payload.id, { status: data.payload.status });
+          break;
+        case "DELETE_TASK":
+          success = await ai.aiDeleteTask(data.payload.id);
+          break;
+        case "EDIT_TASK":
+          success = await ai.aiUpdateTask(data.payload.id, data.payload.updates);
+          break;
+        case "BULK_UPDATE":
+          success = await ai.aiUpdateBulkTasks(data.payload.tasks, data.payload.updates);
+          break;
+      }
+      if (success) onTaskUpdated();
+    } catch (err) {
+      console.error("Error ejecutando acción de IA:", err);
+    }
   };
 
   const sendMessage = async (e?: React.FormEvent) => {
@@ -54,101 +82,123 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, tasks }),
+        body: JSON.stringify({ message: userMsg }),
       });
-
       const data = await res.json();
-      const aiText = data?.text || "Sin respuesta";
 
-      if (isSpeechEnabled && typeof window !== "undefined") {
-        window.speechSynthesis.cancel();
-        const ut = new SpeechSynthesisUtterance(aiText);
-        ut.lang = "es-ES";
-        window.speechSynthesis.speak(ut);
+      if (data.action && data.action !== "NONE") {
+        await executeAiAction(data);
       }
 
-      setMessages(prev => [...prev, { role: "ai", text: aiText }]);
-      if (data.updated) onTaskUpdated();
-    } catch {
-      setMessages(prev => [...prev, { role: "ai", text: "Error de conexión." }]);
+      setMessages(prev => [...prev, { role: "ai", text: data.text || "Hecho." }]);
+
+      if (isSpeechEnabled && window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(data.text);
+        utterance.lang = "es-ES";
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (error) {
+      setMessages(prev => [...prev, { role: "ai", text: "Error de conexión con el servidor." }]);
     } finally {
       setIsTyping(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#1d2125]">
-      {/* Header interno */}
-      <div className="p-4 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-          <h2 className="text-xs font-bold text-gray-400 uppercase">Asistente IA</h2>
-        </div>
-        <button 
-          onClick={() => setIsSpeechEnabled(!isSpeechEnabled)}
-          className={`p-1.5 rounded transition-colors ${isSpeechEnabled ? "text-blue-400" : "text-gray-600"}`}
-        >
-          {isSpeechEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </button>
-      </div>
-
-      {/* Mensajes */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
-          <p className="text-center text-gray-600 text-xs italic mt-10">Escribe o dicta algo para comenzar...</p>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] p-3 rounded-lg text-sm ${
-              m.role === "user" ? "bg-blue-600 text-white" : "bg-[#2c333a] text-gray-200 border border-white/5"
-            }`}>
-              {m.text}
+    <div className={`flex flex-col bg-[#1d2125] border border-white/10 shadow-[0_-20px_80px_rgba(0,0,0,0.6)] rounded-t-[2.5rem] transition-all duration-500 ease-in-out ${isMinimized ? 'h-16' : 'h-[500px] md:h-[600px]'} w-full`}>
+      
+      {/* HEADER */}
+      <div 
+        className="p-5 bg-[#161a1d] flex items-center justify-between border-b border-white/5 cursor-pointer rounded-t-[2.5rem]"
+        onClick={() => setIsMinimized(!isMinimized)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-900/20">
+            <Sparkles size={16} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Asistente AI</h2>
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Sistema Listo</span>
             </div>
           </div>
-        ))}
-        {isTyping && <div className="text-[10px] text-blue-400 animate-pulse font-bold uppercase">IA Pensando...</div>}
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={(e) => { e.stopPropagation(); setIsSpeechEnabled(!isSpeechEnabled); }}
+            className={`p-2 rounded-full transition-colors ${isSpeechEnabled ? "text-blue-400 bg-blue-400/10" : "text-gray-500"}`}
+          >
+            {isSpeechEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          </button>
+          {isMinimized ? <ChevronUp size={20} className="text-white" /> : <ChevronDown size={20} className="text-white" />}
+        </div>
       </div>
 
-      {/* Input */}
-      <form onSubmit={sendMessage} className="p-4 bg-[#22272b] border-t border-white/10">
-  <div className="flex items-center gap-2">
-    <div className="relative flex-1 group">
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Escribe o dicta un mensaje..."
-        className="w-full bg-[#1d2125] border border-white/20 rounded-full pl-5 pr-12 py-3 text-sm text-white placeholder:text-gray-500 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-inner"
-      />
-      
-      {/* Botón de Micrófono mejor posicionado */}
-      <button
-        type="button"
-        onClick={startListening}
-        className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors ${
-          isListening 
-          ? "bg-red-500 text-white animate-pulse" 
-          : "text-gray-400 hover:text-blue-400 hover:bg-white/5"
-        }`}
-      >
-        {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-      </button>
-    </div>
+      {!isMinimized && (
+        <>
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[#1d2125]">
+            {messages.length === 0 && (
+              <div className="h-full flex flex-col items-center justify-center opacity-20 text-center space-y-4">
+                <Activity size={40} className="text-blue-400" />
+                <p className="text-[10px] font-black uppercase tracking-widest leading-loose italic">
+                  "Mueve la tarea X a In Progress"<br/>"Actualiza la fecha de entrega"
+                </p>
+              </div>
+            )}
 
-    {/* Botón de Enviar circular */}
-    <button 
-      type="submit" 
-      disabled={!input.trim() || isTyping}
-      className="p-3 bg-blue-600 rounded-full text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-90 shadow-lg shadow-blue-900/20"
-    >
-      <Send size={18} />
-    </button>
-  </div>
-  
-  <p className="text-[10px] text-center mt-3 text-gray-500 font-medium tracking-wide uppercase opacity-50">
-    IA Integrada • TaskMaster
-  </p>
-</form>
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] p-4 rounded-[1.5rem] text-xs font-medium leading-relaxed shadow-sm ${
+                  m.role === "user" 
+                  ? "bg-blue-600 text-white rounded-br-none shadow-md" 
+                  : "bg-[#2c333a] text-gray-200 rounded-bl-none border border-white/5"
+                }`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            
+            {isTyping && (
+              <div className="flex items-center gap-2 text-blue-400 pl-2">
+                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
+                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                 <span className="text-[9px] font-black uppercase tracking-widest ml-2">Procesando</span>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={sendMessage} className="p-5 bg-[#22272b] border-t border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Escribe o dicta una orden..."
+                  className="w-full bg-[#1d2125] border border-white/10 rounded-[1.2rem] pl-5 pr-12 py-4 text-xs text-white focus:ring-2 focus:ring-blue-500/40 outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={startListening}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl transition-all ${
+                    isListening ? "bg-red-500 text-white animate-pulse" : "text-gray-500 hover:text-blue-400"
+                  }`}
+                >
+                  {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
+              </div>
+              <button 
+                type="submit" 
+                disabled={!input.trim() || isTyping}
+                className="p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all disabled:opacity-20 shadow-lg active:scale-95"
+              >
+                <Send size={18} />
+              </button>
+            </div>
+          </form>
+        </>
+      )}
     </div>
   );
 }

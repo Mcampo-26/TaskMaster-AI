@@ -31,7 +31,7 @@ export default function TaskCard({
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('¿Eliminar esta tarea?')) return;
+    if (!confirm('Delete this task?')) return;
     await fetch(`/api/tasks/${task._id}`, { method: 'DELETE' });
     onUpdate();
   };
@@ -100,7 +100,7 @@ export default function TaskCard({
                   }}
                   className="flex items-center gap-3 w-full p-2.5 hover:bg-blue-50 rounded-xl text-xs font-bold text-slate-600"
                 >
-                  <span>👁️</span> Abrir detalles
+                  <span className="text-sm">👁️</span> Open Details
                 </button>
 
                 <div className="h-[1px] bg-slate-100 my-2 mx-2"></div>
@@ -109,7 +109,7 @@ export default function TaskCard({
                   onClick={handleDelete}
                   className="flex items-center gap-3 w-full p-2.5 hover:bg-red-50 rounded-xl text-xs font-bold text-red-500"
                 >
-                  <span>🗑️</span> Eliminar tarea
+                  <span className="text-sm">🗑️</span> Delete Task
                 </button>
               </div>
             )}
@@ -126,7 +126,7 @@ export default function TaskCard({
 
         {(task.links?.length || 0) > 0 && (
           <div className="flex items-center gap-1 text-[10px] font-black text-slate-400 mb-4 bg-slate-50 w-fit px-2 py-1 rounded-lg">
-            <span>🔗</span> {task.links?.length} LINK(S)
+            <span>🔗</span> {task.links?.length} {task.links?.length === 1 ? 'LINK' : 'LINKS'}
           </div>
         )}
 
@@ -149,7 +149,7 @@ export default function TaskCard({
                 : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200'
               }`}
           >
-            {isUpdating ? '...' : task.status === 'completed' ? 'Reiniciar' : 'Avanzar →'}
+            {isUpdating ? '...' : task.status === 'completed' ? 'Restart' : 'Advance →'}
           </button>
         </div>
       </div>
