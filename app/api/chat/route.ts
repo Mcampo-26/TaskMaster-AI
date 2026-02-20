@@ -33,6 +33,7 @@ Debes responder ÚNICAMENTE un objeto JSON con este formato:
     "status": "pending",
     "title": "nombre de la tarea",
     "priority": "high" | "medium" | "low",
+    "description": "resumen o detalles de la tarea",
     "dueDate": "YYYY-MM-DD"
   }
 }

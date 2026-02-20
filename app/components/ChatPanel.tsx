@@ -61,7 +61,11 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
           success = await ai.aiDeleteTask(data.payload.id);
           break;
         case "EDIT_TASK":
-          success = await ai.aiUpdateTask(data.payload.id, data.payload.updates);
+          // CORRECCIÓN AQUÍ: Extraemos el ID y mandamos todo lo demás como actualizaciones (incluye descripción)
+          if (data.payload.id) {
+            const { id, ...updates } = data.payload;
+            success = await ai.aiUpdateTask(id, updates);
+          }
           break;
         case "BULK_UPDATE":
           success = await ai.aiUpdateBulkTasks(data.payload.tasks, data.payload.updates);
@@ -166,10 +170,10 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
         ))}
         {isTyping && (
           <div className="flex items-center gap-2 text-blue-400 pl-2">
-             <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce"></span>
-             <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-             <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
-             <span className="text-[10px] font-bold uppercase tracking-widest ml-1">Procesando</span>
+              <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce"></span>
+              <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+              <span className="w-1 h-1 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+              <span className="text-[10px] font-bold uppercase tracking-widest ml-1">Procesando</span>
           </div>
         )}
       </div>
