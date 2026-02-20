@@ -5,25 +5,33 @@ import TaskCard from './components/TaskCard';
 import TaskForm from './components/TaskForm';
 import ChatPanel from './components/ChatPanel';
 import Navbar from './components/Navbar';
-import { SearchX, Plus } from 'lucide-react';
+import { SearchX, Plus, Loader2 } from 'lucide-react';
 
 export default function KanbanDashboard() {
-  const [tasks, setTasks] = useState<any[]>([]); // any[] evita errores de tipo 'never'
+  const [tasks, setTasks] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true); // Estado de carga inicial
 
   const fetchTasks = async () => {
-    const res = await fetch('/api/tasks');
-    const data = await res.json();
-    // Limpieza de datos recibidos
-    const cleanData = data.map((t: any) => ({
+    try {
+      const res = await fetch('/api/tasks');
+      const data = await res.json();
+      const cleanData = data.map((t: any) => ({
         ...t,
         title: typeof t.title === 'object' ? (t.title?.title || "Sin título") : (t.title || "Sin título")
-    }));
-    setTasks(cleanData);
+      }));
+      setTasks(cleanData);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    } finally {
+      setLoading(false); // Apagar spinner
+    }
   };
 
-  useEffect(() => { fetchTasks(); }, []);
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   const onDragEnd = async (result: any) => {
     const { destination, source, draggableId } = result;
@@ -60,50 +68,65 @@ export default function KanbanDashboard() {
     <div className="flex flex-col h-screen w-full bg-[#0079bf] overflow-hidden font-sans relative">
       <Navbar onSearch={setSearchTerm} onOpenForm={() => setIsModalOpen(true)} />
 
-      <div className="flex-1 overflow-x-auto p-4 md:p-8 scrollbar-hide">
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex gap-4 md:gap-8 items-start h-full min-w-max pb-20">
-            {columns.map(col => (
-              <div key={col.id} className="w-[280px] md:w-[350px] shrink-0 bg-[#ebecf0] rounded-[2.5rem] flex flex-col max-h-full shadow-2xl overflow-hidden">
-                <div className="p-6 flex justify-between items-center">
-                  <h2 className="font-black text-[#172b4d] text-[11px] uppercase tracking-widest">{col.title}</h2>
-                  <span className="bg-white/80 text-[#172b4d] text-[10px] px-3 py-1 rounded-full font-black">
-                    {filteredTasks.filter(t => t.status === col.id).length}
-                  </span>
+      {/* SPINNER DE CARGA PRINCIPAL */}
+      {loading ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-white/80">
+          <Loader2 className="w-12 h-12 animate-spin mb-4" />
+          <p className="font-bold tracking-widest text-sm uppercase">Loading...</p>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-x-auto p-4 md:p-8 scrollbar-hide">
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex gap-4 md:gap-8 items-start h-full min-w-max pb-20">
+              {columns.map(col => (
+                <div key={col.id} className="w-[280px] md:w-[350px] shrink-0 bg-[#ebecf0] rounded-[2.5rem] flex flex-col max-h-full shadow-2xl overflow-hidden">
+                  <div className="p-6 flex justify-between items-center">
+                    <h2 className="font-black text-[#172b4d] text-[11px] uppercase tracking-widest">{col.title}</h2>
+                    <span className="bg-white/80 text-[#172b4d] text-[10px] px-3 py-1 rounded-full font-black">
+                      {filteredTasks.filter(t => t.status === col.id).length}
+                    </span>
+                  </div>
+
+                  <Droppable droppableId={col.id}>
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="flex-1 overflow-y-auto px-4 min-h-[150px]">
+                        {filteredTasks.filter(t => t.status === col.id).length === 0 && (
+                          <div className="py-10 text-center opacity-30 italic text-xs">
+                            No hay tareas aquí
+                          </div>
+                        )}
+                        {filteredTasks
+                          .filter(t => t.status === col.id)
+                          .map((task, index) => (
+                            <Draggable key={task._id} draggableId={task._id} index={index}>
+                              {(p) => (
+                                <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className="mb-4">
+                                  <TaskCard task={task} index={index} onUpdate={fetchTasks} />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+
+                  <button onClick={() => setIsModalOpen(true)} className="m-4 p-4 text-slate-500 hover:text-slate-900 flex items-center justify-center gap-3 transition-all font-bold text-xs uppercase tracking-tighter">
+                    <Plus size={14} /> Add New Task
+                  </button>
                 </div>
+              ))}
+            </div>
+          </DragDropContext>
+        </div>
+      )}
 
-                <Droppable droppableId={col.id}>
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef} className="flex-1 overflow-y-auto px-4 min-h-[150px]">
-                      {filteredTasks
-                        .filter(t => t.status === col.id)
-                        .map((task, index) => (
-                          <Draggable key={task._id} draggableId={task._id} index={index}>
-                            {(p) => (
-                              <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className="mb-4">
-                                <TaskCard task={task} index={index} onUpdate={fetchTasks} />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-
-                <button onClick={() => setIsModalOpen(true)} className="m-4 p-4 text-slate-500 hover:text-slate-900 flex items-center justify-center gap-3 transition-all">
-                  <Plus size={14} /> Add New Task
-                </button>
-              </div>
-            ))}
-          </div>
-        </DragDropContext>
-      </div>
-
+      {/* PANEL DE IA */}
       <div className="fixed bottom-0 right-0 md:right-10 w-full md:w-[450px] z-[100] px-4 md:px-0">
         <ChatPanel tasks={tasks} onTaskUpdated={fetchTasks} />
       </div>
 
+      {/* MODAL DE FORMULARIO */}
       {isModalOpen && <TaskForm onTaskCreated={fetchTasks} onClose={() => setIsModalOpen(false)} />}
     </div>
   );
