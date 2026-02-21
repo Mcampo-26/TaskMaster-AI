@@ -10,9 +10,9 @@ interface TaskCardProps {
   onUpdate: () => void;
 }
 
-export default function TaskCard({ 
-  task, 
-  onUpdate 
+export default function TaskCard({
+  task,
+  onUpdate
 }: TaskCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -67,9 +67,9 @@ export default function TaskCard({
 
   return (
     <>
-      <div 
+      <div
         onClick={() => setShowDetail(true)}
-        className="group bg-white dark:bg-[#111827] p-5 rounded-[2rem] mb-4 shadow-sm border border-slate-200/60 dark:border-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all duration-300 relative cursor-pointer"
+        className="group bg-white dark:bg-[#161b22] p-5 rounded-[2rem] mb-4 shadow-sm border border-slate-200/60 dark:border-slate-800/50 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all duration-300 relative cursor-pointer"
       >
         <div className="flex justify-between items-start mb-4">
           {/* Priority Badge Soft */}
@@ -81,24 +81,24 @@ export default function TaskCard({
           </div>
 
           <div className="relative" ref={menuRef}>
-            <button 
+            <button
               onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
               className="p-1.5 text-slate-300 dark:text-slate-700 hover:text-slate-600 dark:hover:text-slate-400 rounded-full transition-all"
             >
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3"/>
+                <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3m5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
               </svg>
             </button>
 
             {showMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1f2937] border border-slate-100 dark:border-slate-700 shadow-xl rounded-2xl p-1.5 z-[100] animate-in fade-in zoom-in duration-200">
-                <button 
+                <button
                   onClick={(e) => { e.stopPropagation(); setShowDetail(true); setShowMenu(false); }}
                   className="flex items-center gap-3 w-full p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 transition-colors"
                 >
                   <span className="opacity-50">👁️</span> Detalles
                 </button>
-                <button 
+                <button
                   onClick={handleDelete}
                   className="flex items-center gap-3 w-full p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl text-xs font-medium text-rose-500 transition-colors"
                 >
@@ -109,11 +109,11 @@ export default function TaskCard({
           </div>
         </div>
 
-        <h3 className="font-bold text-base text-slate-800 dark:text-slate-100 mb-1.5 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+        <h3 className="font-semibold text-[20px] text-slate-800 dark:text-[#B6C2CF] mb-2">
           {task.title}
         </h3>
 
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium line-clamp-2 mb-4 leading-relaxed">
+        <p className="text-xs text-slate-500 dark:text-[#9FADBC] leading-relaxed">
           {task.description}
         </p>
 
@@ -134,8 +134,8 @@ export default function TaskCard({
             </span>
           </div>
 
-          <button 
-            onClick={handleAdvance} 
+          <button
+            onClick={handleAdvance}
             disabled={isUpdating}
             className={`px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase transition-all active:scale-95
               ${task.status === 'completed'
@@ -149,10 +149,10 @@ export default function TaskCard({
       </div>
 
       {showDetail && (
-        <TaskDetailModal 
-          task={task} 
-          onClose={() => setShowDetail(false)} 
-          onUpdate={onUpdate} 
+        <TaskDetailModal
+          task={task}
+          onClose={() => setShowDetail(false)}
+          onUpdate={onUpdate}
         />
       )}
     </>
