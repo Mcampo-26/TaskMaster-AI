@@ -108,7 +108,7 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
       backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden
       
       /* MOBILE */
-      fixed bottom-[170px] left-4 right-4 z-[50] rounded-3xl
+      fixed bottom-[150px] left-4 right-4 z-[50] rounded-3xl
       
     /* DESKTOP (md) */
       /* Ajustamos bottom-24 y right-24 para subirlo y alejarlo de la derecha */
