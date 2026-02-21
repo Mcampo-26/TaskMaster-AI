@@ -108,10 +108,13 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
       backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden
       
       /* MOBILE */
-      fixed bottom-[150px] left-4 right-4 z-[999] rounded-3xl
+      fixed bottom-[170px] left-4 right-4 z-[50] rounded-3xl
       
-      /* DESKTOP (md) */
-      md:relative md:bottom-0 md:left-auto md:right-auto md:z-[50] md:rounded-[2rem]
+    /* DESKTOP (md) */
+      /* Ajustamos bottom-24 y right-24 para subirlo y alejarlo de la derecha */
+      md:fixed md:bottom-24 md:right-auto md:left-auto md:z-[100] md:rounded-[2rem]
+      
+      /* DINÁMICO */
       
       /* CAMBIO CLAVE: Usamos max-height en lugar de height fija para eliminar el vacío */
       ${isOpen ? "max-h-[500px] h-auto w-auto md:w-[450px]" : "h-[70px] w-auto md:w-[280px]"}
