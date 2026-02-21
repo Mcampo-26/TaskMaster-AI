@@ -34,6 +34,7 @@ Debes responder ÚNICAMENTE un objeto JSON con este formato:
     "title": "nombre de la tarea",
     "priority": "high" | "medium" | "low",
     "description": "resumen o detalles de la tarea",
+    "category": "nombre de la categoria",
     "dueDate": "YYYY-MM-DD"
   }
 }

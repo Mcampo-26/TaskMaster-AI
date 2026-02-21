@@ -11,7 +11,7 @@ export default function KanbanDashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true); // Estado de carga inicial
+  const [loading, setLoading] = useState(true);
 
   const fetchTasks = async () => {
     try {
@@ -19,13 +19,13 @@ export default function KanbanDashboard() {
       const data = await res.json();
       const cleanData = data.map((t: any) => ({
         ...t,
-        title: typeof t.title === 'object' ? (t.title?.title || "Sin título") : (t.title || "Sin título")
+        title: typeof t.title === 'object' ? (t.title?.title || "Untitled") : (t.title || "Untitled")
       }));
       setTasks(cleanData);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     } finally {
-      setLoading(false); // Apagar spinner
+      setLoading(false);
     }
   };
 
@@ -65,12 +65,12 @@ export default function KanbanDashboard() {
   ];
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#0079bf] overflow-hidden font-sans relative">
+    // FONDO: bg-slate-50 en modo claro (gris suave, no blanco puro)
+    <div className="flex flex-col h-screen w-full bg-slate-50 dark:bg-[#020617] overflow-hidden font-sans relative transition-colors duration-500">
       <Navbar onSearch={setSearchTerm} onOpenForm={() => setIsModalOpen(true)} />
 
-      {/* SPINNER DE CARGA PRINCIPAL */}
       {loading ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-white/80">
+        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600">
           <Loader2 className="w-12 h-12 animate-spin mb-4" />
           <p className="font-bold tracking-widest text-sm uppercase">Loading...</p>
         </div>
@@ -79,20 +79,24 @@ export default function KanbanDashboard() {
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex gap-4 md:gap-8 items-start h-full min-w-max pb-20">
               {columns.map(col => (
-                <div key={col.id} className="w-[280px] md:w-[350px] shrink-0 bg-[#ebecf0] rounded-[2.5rem] flex flex-col max-h-full shadow-2xl overflow-hidden">
-                  <div className="p-6 flex justify-between items-center">
-                    <h2 className="font-black text-[#172b4d] text-[11px] uppercase tracking-widest">{col.title}</h2>
-                    <span className="bg-white/80 text-[#172b4d] text-[10px] px-3 py-1 rounded-full font-black">
+                <div 
+                  key={col.id} 
+                  // COLUMNAS: bg-slate-200/50 para que se note la separación del fondo
+                  className="w-[280px] md:w-[350px] shrink-0 bg-slate-200/50 dark:bg-slate-900/40 backdrop-blur-md rounded-[2.5rem] flex flex-col max-h-full shadow-lg shadow-slate-200/50 dark:shadow-none border border-slate-300/40 dark:border-slate-800/50 overflow-hidden transition-all"
+                >
+                  <div className="p-7 flex justify-between items-center">
+                    <h2 className="font-black text-slate-500 dark:text-slate-500 text-[11px] uppercase tracking-[0.2em]">{col.title}</h2>
+                    <span className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] px-3 py-1 rounded-full font-black border border-slate-200 dark:border-slate-700 shadow-sm">
                       {filteredTasks.filter(t => t.status === col.id).length}
                     </span>
                   </div>
 
                   <Droppable droppableId={col.id}>
                     {(provided) => (
-                      <div {...provided.droppableProps} ref={provided.innerRef} className="flex-1 overflow-y-auto px-4 min-h-[150px]">
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="flex-1 overflow-y-auto px-4 min-h-[150px] scrollbar-hide">
                         {filteredTasks.filter(t => t.status === col.id).length === 0 && (
-                          <div className="py-10 text-center opacity-30 italic text-xs">
-                            No hay tareas aquí
+                          <div className="py-10 text-center text-slate-400 dark:text-slate-700 italic text-[10px] uppercase tracking-widest font-medium">
+                            No tasks yet
                           </div>
                         )}
                         {filteredTasks
@@ -111,7 +115,10 @@ export default function KanbanDashboard() {
                     )}
                   </Droppable>
 
-                  <button onClick={() => setIsModalOpen(true)} className="m-4 p-4 text-slate-500 hover:text-slate-900 flex items-center justify-center gap-3 transition-all font-bold text-xs uppercase tracking-tighter">
+                  <button 
+                    onClick={() => setIsModalOpen(true)} 
+                    className="m-6 p-4 rounded-2xl bg-white/60 dark:bg-slate-800/30 text-slate-500 dark:text-slate-500 hover:text-blue-600 dark:hover:text-slate-300 hover:bg-white dark:hover:bg-slate-800/50 flex items-center justify-center gap-3 transition-all font-black text-[10px] uppercase tracking-tighter shadow-sm border border-slate-200 dark:border-transparent"
+                  >
                     <Plus size={14} /> Add New Task
                   </button>
                 </div>

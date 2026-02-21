@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { ITask } from '@/models/Task';
-import { Calendar, Sparkles } from 'lucide-react';
+import { Calendar, Sparkles, Tag, X } from 'lucide-react';
 
 interface TaskFormProps {
   onTaskCreated: () => void;
@@ -11,12 +11,12 @@ interface TaskFormProps {
 export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('General');
   const [priority, setPriority] = useState<ITask['priority']>('medium');
-  const [dueDate, setDueDate] = useState(''); // Nuevo estado para fecha
+  const [dueDate, setDueDate] = useState(''); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMagicLoading, setIsMagicLoading] = useState(false);
 
-  // --- FUNCIÓN DE IA MAGIC ACTUALIZADA ---
   const handleAiMagic = async () => {
     if (!title.trim()) return alert("Escribe un título para que la IA te ayude");
     
@@ -28,7 +28,7 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
         body: JSON.stringify({ 
           message: `Analiza esta tarea: "${title}". 
           Devuelve SOLO un JSON con este formato: 
-          {"description": "una descripción útil", "priority": "low"|"medium"|"high", "dueDate": "YYYY-MM-DD" (si menciono tiempo, si no "" )}` 
+          {"description": "una descripción útil", "priority": "low"|"medium"|"high", "dueDate": "YYYY-MM-DD", "category": "una palabra para clasificar"}` 
         }),
       });
       
@@ -38,6 +38,7 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
       setDescription(aiContent.description);
       setPriority(aiContent.priority);
       if (aiContent.dueDate) setDueDate(aiContent.dueDate);
+      if (aiContent.category) setCategory(aiContent.category);
       
     } catch (error) {
       console.error("Error con Magic IA:", error);
@@ -58,8 +59,9 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
         body: JSON.stringify({
           title,
           description,
+          category,
           priority,
-          dueDate: dueDate || null, // Enviamos la fecha
+          dueDate: dueDate || null,
           status: 'pending',
           userId: 'user_maury',
         }),
@@ -77,20 +79,21 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-slate-900/40 dark:bg-black/70 backdrop-blur-md flex items-center justify-center z-[250] p-4 animate-in fade-in duration-300">
       <form 
         onSubmit={handleSubmit}
-        className="bg-[#0f172a] border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl relative overflow-hidden"
+        className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl relative overflow-hidden transition-colors duration-300"
       >
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 blur-[80px] rounded-full"></div>
+        {/* Decoración de fondo (Solo visible en dark para el toque pro) */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/5 dark:bg-blue-600/10 blur-[80px] rounded-full pointer-events-none"></div>
 
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-black text-white tracking-tight">Nueva Tarea</h2>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Nueva Tarea</h2>
           <button 
             type="button"
             onClick={handleAiMagic}
             disabled={isMagicLoading || !title}
-            className="group relative flex items-center gap-2 bg-gradient-to-br from-indigo-600 to-purple-600 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:shadow-[0_0_20px_rgba(79,70,229,0.4)] transition-all disabled:opacity-30 active:scale-95"
+            className="group relative flex items-center gap-2 bg-gradient-to-br from-indigo-600 to-purple-600 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:shadow-lg transition-all disabled:opacity-30 active:scale-95"
           >
             {isMagicLoading ? '🪄 Pensando...' : <><Sparkles size={14}/> IA Magic</>}
           </button>
@@ -99,24 +102,38 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
         <div className="space-y-6">
           {/* TÍTULO */}
           <div className="group">
-            <label className="block text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2 ml-1">Título</label>
+            <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 dark:text-slate-500 mb-2 ml-1">Título</label>
             <input 
               autoFocus
               type="text" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-5 py-4 focus:ring-2 ring-blue-500/50 outline-none transition-all text-white text-lg placeholder:text-slate-700"
+              className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 focus:ring-2 ring-blue-500/50 outline-none transition-all text-slate-900 dark:text-white text-lg placeholder:text-slate-300 dark:placeholder:text-slate-700 shadow-sm dark:shadow-inner"
               placeholder="¿Qué tienes en mente?"
+            />
+          </div>
+
+          {/* CATEGORÍA */}
+          <div className="group">
+            <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 dark:text-slate-500 mb-2 ml-1 flex items-center gap-2">
+              <Tag size={12} /> Categoría
+            </label>
+            <input 
+              type="text" 
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3 focus:ring-2 ring-blue-500/50 outline-none transition-all text-slate-900 dark:text-white text-sm placeholder:text-slate-300 dark:placeholder:text-slate-700 shadow-sm"
+              placeholder="Ej: Trabajo, Personal..."
             />
           </div>
 
           {/* DESCRIPCIÓN */}
           <div className="group">
-            <label className="block text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2 ml-1">Descripción</label>
+            <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 dark:text-slate-500 mb-2 ml-1">Descripción</label>
             <textarea 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-5 py-4 focus:ring-2 ring-blue-500/50 outline-none transition-all h-28 text-slate-300 resize-none placeholder:text-slate-700 text-sm"
+              className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 focus:ring-2 ring-blue-500/50 outline-none transition-all h-28 text-slate-700 dark:text-slate-300 resize-none placeholder:text-slate-300 dark:placeholder:text-slate-700 text-sm shadow-sm dark:shadow-inner"
               placeholder="Detalles adicionales..."
             />
           </div>
@@ -124,8 +141,8 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* PRIORIDAD */}
             <div>
-              <label className="block text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2 ml-1">Prioridad</label>
-              <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl">
+              <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 dark:text-slate-500 mb-2 ml-1">Prioridad</label>
+              <div className="flex bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl">
                 {(['low', 'medium', 'high'] as const).map((p) => (
                   <button
                     key={p}
@@ -133,8 +150,8 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
                     onClick={() => setPriority(p)}
                     className={`flex-1 py-2 rounded-xl text-[10px] font-black transition-all ${
                       priority === p 
-                        ? 'bg-slate-800 text-white shadow-lg shadow-black/20' 
-                        : 'text-slate-600 hover:text-slate-400'
+                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md dark:shadow-black/20' 
+                        : 'text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400'
                     }`}
                   >
                     {p.toUpperCase()}
@@ -143,16 +160,16 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
               </div>
             </div>
 
-            {/* FECHA DE VENCIMIENTO (Agregado) */}
+            {/* FECHA DE VENCIMIENTO */}
             <div>
-              <label className="block text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2 ml-1 flex items-center gap-2">
+              <label className="block text-[10px] uppercase tracking-widest font-black text-slate-400 dark:text-slate-500 mb-2 ml-1 flex items-center gap-2">
                 <Calendar size={12} /> Vencimiento
               </label>
               <input 
                 type="date" 
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3 text-slate-300 text-xs font-bold outline-none focus:ring-2 ring-blue-500/50 transition-all [color-scheme:dark]"
+                className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-slate-900 dark:text-slate-300 text-xs font-bold outline-none focus:ring-2 ring-blue-500/50 transition-all shadow-sm"
               />
             </div>
           </div>
@@ -162,14 +179,14 @@ export default function TaskForm({ onTaskCreated, onClose }: TaskFormProps) {
           <button 
             type="button"
             onClick={onClose}
-            className="flex-1 px-6 py-4 rounded-2xl text-slate-400 font-bold hover:bg-slate-800 transition-all text-xs uppercase"
+            className="flex-1 px-6 py-4 rounded-2xl text-slate-400 dark:text-slate-500 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-xs uppercase"
           >
             Cancelar
           </button>
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="flex-[2] bg-white text-black hover:bg-blue-50 disabled:opacity-50 px-6 py-4 rounded-2xl font-black transition-all shadow-xl active:scale-95 text-xs uppercase tracking-widest"
+            className="flex-[2] bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-slate-800 dark:hover:bg-blue-50 disabled:opacity-50 px-6 py-4 rounded-2xl font-black transition-all shadow-xl active:scale-95 text-xs uppercase tracking-widest"
           >
             {isSubmitting ? 'Guardando...' : 'Crear Tarea'}
           </button>

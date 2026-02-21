@@ -7,6 +7,7 @@ export const aiCreateTask = async (payload: any) => {
   const dueDate = payload?.dueDate || null;
   const priority = payload?.priority || 'medium';
   const description = payload?.description || "";
+  const category = payload?.category || "General"; // <-- AÑADIDO
 
   // Validación de título
   if (!title || typeof title !== 'string') {
@@ -22,6 +23,7 @@ export const aiCreateTask = async (payload: any) => {
       status: 'pending', 
       priority,
       dueDate,
+      category,      
       description
     }),
   });
