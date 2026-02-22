@@ -111,10 +111,14 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
         </div>
       )}
 
-      <div
-        className="bg-white dark:bg-[#0b1120] w-full max-w-4xl h-full max-h-[80vh] rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
-        onClick={(e) => e.stopPropagation()}
-      >
+<div
+  className="bg-white dark:bg-[#0b1120] w-full max-w-4xl 
+             h-full md:h-[90vh] md:max-h-[850px] 
+             rounded-none md:rounded-[2.5rem] 
+             shadow-2xl border-none md:border md:border-slate-200 dark:md:border-slate-800 
+             relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
+  onClick={(e) => e.stopPropagation()}
+>
         {/* BOTÓN CERRAR FLOTANTE */}
         <button
           onClick={onClose}
