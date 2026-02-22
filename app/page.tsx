@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import TaskCard from './components/TaskCard';
 import TaskForm from './components/TaskForm';
-import ChatPanel from './components/ChatPanel';
 import Navbar from './components/Navbar';
 import { SearchX, Plus, Loader2 } from 'lucide-react';
 import Footer from './components/Footer';
@@ -67,7 +66,14 @@ export default function KanbanDashboard() {
 
   return (
     <div className="flex flex-col h-screen w-full bg-slate-50 dark:bg-[#020617] overflow-hidden font-sans relative transition-colors duration-500">
-      <Navbar onSearch={setSearchTerm} onOpenForm={() => setIsModalOpen(true)} />
+      
+      {/* NAVBAR CON PROPS DEL CHAT */}
+      <Navbar 
+        onSearch={setSearchTerm} 
+        onOpenForm={() => setIsModalOpen(true)} 
+        tasks={tasks}
+        onTaskUpdated={fetchTasks}
+      />
 
       {loading ? (
         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600">
@@ -109,23 +115,14 @@ export default function KanbanDashboard() {
                   </button>
                 </div>
               ))}
-
-              {/* DESKTOP STICKY ABAJO: sticky bottom-0 y self-end lo anclan a la base del viewport */}
-              <div className="hidden md:block sticky bottom-0 self-end z-[50]">
-                <ChatPanel tasks={tasks} onTaskUpdated={fetchTasks} />
-              </div>
             </div>
           </DragDropContext>
         </div>
       )}
       
-      {/* MOBILE FIXED (Mismo margen mb-110px interno del componente) */}
-      <div className="md:hidden">
-        <ChatPanel tasks={tasks} onTaskUpdated={fetchTasks} />
-      </div>
       <Footer />
 
-
+      {/* EL MODAL TIENE PRIORIDAD VISUAL (Z-INDEX SUPERIOR) */}
       {isModalOpen && <TaskForm onTaskCreated={fetchTasks} onClose={() => setIsModalOpen(false)} />}
     </div>
   );

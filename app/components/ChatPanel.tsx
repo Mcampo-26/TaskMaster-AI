@@ -47,29 +47,19 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
     let success = false;
     try {
       switch (data.action) {
-        case "CREATE_TASK":
-          success = await ai.aiCreateTask(data.payload);
-          break;
-        case "UPDATE_STATUS":
-          success = await ai.aiUpdateTask(data.payload.id, { status: data.payload.status });
-          break;
-        case "DELETE_TASK":
-          success = await ai.aiDeleteTask(data.payload.id);
-          break;
+        case "CREATE_TASK": success = await ai.aiCreateTask(data.payload); break;
+        case "UPDATE_STATUS": success = await ai.aiUpdateTask(data.payload.id, { status: data.payload.status }); break;
+        case "DELETE_TASK": success = await ai.aiDeleteTask(data.payload.id); break;
         case "EDIT_TASK":
           if (data.payload.id) {
             const { id, ...updates } = data.payload;
             success = await ai.aiUpdateTask(id, updates);
           }
           break;
-        case "BULK_UPDATE":
-          success = await ai.aiUpdateBulkTasks(data.payload.tasks, data.payload.updates);
-          break;
+        case "BULK_UPDATE": success = await ai.aiUpdateBulkTasks(data.payload.tasks, data.payload.updates); break;
       }
       if (success) onTaskUpdated(); 
-    } catch (err) {
-      console.error("Error executing AI action:", err);
-    }
+    } catch (err) { console.error("Error executing AI action:", err); }
   };
 
   const sendMessage = async (e?: React.FormEvent) => {
@@ -86,9 +76,7 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
         body: JSON.stringify({ message: userMsg }),
       });
       const data = await res.json();
-      if (data.action && data.action !== "NONE") {
-        await executeAiAction(data);
-      }
+      if (data.action && data.action !== "NONE") await executeAiAction(data);
       setMessages(prev => [...prev, { role: "ai", text: data.text || "Done." }]);
       if (isSpeechEnabled && window.speechSynthesis) {
         const utterance = new SpeechSynthesisUtterance(data.text);
@@ -97,109 +85,93 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
       }
     } catch (error) {
       setMessages(prev => [...prev, { role: "ai", text: "Connection error." }]);
-    } finally {
-      setIsTyping(false);
-    }
+    } finally { setIsTyping(false); }
   };
 
   return (
-    <div className={`
-      transition-all duration-500 ease-in-out bg-white/95 dark:bg-[#1d2125]/95 
-      backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden
+    /* CONTENEDOR PADRE: En desktop es un item relativo del navbar */
+    <div className="relative md:static lg:relative flex items-center">
       
-      /* MOBILE */
-      fixed bottom-[150px] left-4 right-4 z-[50] rounded-3xl
-      
-    /* DESKTOP (md) */
-      /* Ajustamos bottom-24 y right-24 para subirlo y alejarlo de la derecha */
-      md:fixed md:bottom-24 md:right-auto md:left-auto md:z-[100] md:rounded-[2rem]
-      
-      /* DINÁMICO */
-      
-      /* CAMBIO CLAVE: Usamos max-height en lugar de height fija para eliminar el vacío */
-      ${isOpen ? "max-h-[500px] h-auto w-auto md:w-[450px]" : "h-[70px] w-auto md:w-[280px]"}
-    `}>
-      {/* Header */}
-      <div 
-        className="p-4 bg-slate-50/80 dark:bg-[#161a1d]/80 flex items-center justify-between border-b border-slate-200 dark:border-white/5 cursor-pointer"
+      {/* BOTÓN INTEGRADO AL NAVBAR */}
+      <button 
         onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-2 px-3 h-9 rounded-xl transition-all border 
+          ${isOpen 
+            ? "bg-white/20 border-white/20 text-white" 
+            : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+          }`}
       >
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-900/20">
-            <Sparkles size={16} className="text-white" />
-          </div>
-          <div>
-            <h2 className="text-[10px] font-black text-slate-800 dark:text-white uppercase tracking-widest">AI Assistant</h2>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-[9px] font-bold text-slate-500 dark:text-gray-500 uppercase">Online</span>
-            </div>
-          </div>
-        </div>
+        <Sparkles size={14} className={isOpen ? "text-blue-400" : "text-blue-400/70"} />
+        <span className="text-[10px] font-black uppercase tracking-tight hidden sm:block">AI Assistant</span>
+        <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {/* PANEL DESPLEGABLE (DROPDOWN) */}
+      <div className={`
+        transition-all duration-300 ease-in-out bg-white dark:bg-[#1d2125] 
+        border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden
         
-        <div className="flex items-center gap-2">
-           <button 
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setIsSpeechEnabled(!isSpeechEnabled); }}
-            className={`p-2 rounded-full transition-colors ${isSpeechEnabled ? "text-blue-600 bg-blue-100 dark:bg-blue-400/10" : "text-slate-400 bg-slate-200 dark:bg-white/5"}`}
-          >
-            {isSpeechEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
-          </button>
-          <div className="text-slate-400">
-            {isOpen ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-          </div>
-        </div>
-      </div>
-
-      {/* Cuerpo: Eliminamos paddings innecesarios abajo */}
-      <div className={`flex flex-col transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-        {/* Área de Mensajes: max-h dinámico para que empuje el form hacia arriba */}
-        <div 
-          ref={scrollRef} 
-          className="overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1d2125] custom-scrollbar max-h-[350px]"
-        >
-          {messages.length === 0 && (
-            <div className="py-10 flex flex-col items-center justify-center opacity-30 text-center space-y-2">
-              <Activity size={40} className="text-blue-600" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-white">Ready</p>
+        /* MOBILE: Flotante fijo */
+        fixed bottom-24 left-4 right-4 z-[9999] rounded-3xl
+        
+        /* DESKTOP: Dropdown absoluto que "cae" del botón */
+        md:absolute md:bottom-auto md:top-11 md:right-0 md:left-auto
+        md:w-[380px] md:rounded-2xl
+        
+        ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}
+      `}>
+        <div className="flex flex-col h-[450px]">
+          {/* Header del Panel (Solo título y controles) */}
+          <div className="p-4 bg-slate-50 dark:bg-[#161a1d] flex items-center justify-between border-b dark:border-white/5">
+            <div className="flex items-center gap-2">
+              <Activity size={14} className="text-blue-500" />
+              <span className="text-[10px] font-black uppercase text-slate-500">Live AI</span>
             </div>
-          )}
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] p-3 rounded-2xl text-xs ${m.role === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-slate-100 dark:bg-[#2c333a] dark:text-gray-200 rounded-bl-none border border-slate-200 dark:border-white/5"}`}>
-                {m.text}
-              </div>
-            </div>
-          ))}
-          {isTyping && (
-            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 pl-2">
-                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce"></span>
-                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:0.4s]"></span>
-            </div>
-          )}
-        </div>
-
-        {/* Formulario: Pegado al final del contenido */}
-        <form onSubmit={sendMessage} className="p-4 bg-slate-50/50 dark:bg-[#22272b]/50 border-t border-slate-200 dark:border-white/10 mt-auto">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Command..."
-                className="w-full bg-white dark:bg-[#1d2125] border border-slate-300 dark:border-white/10 rounded-full pl-5 pr-12 py-2.5 text-xs outline-none"
-              />
-              <button type="button" onClick={startListening} className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${isListening ? "bg-red-500 text-white animate-pulse" : "text-slate-400"}`}>
-                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-              </button>
-            </div>
-            <button type="submit" className="p-2.5 bg-blue-600 text-white rounded-full">
-              <Send size={16} />
+            <button 
+              onClick={(e) => { e.stopPropagation(); setIsSpeechEnabled(!isSpeechEnabled); }}
+              className={`p-1.5 rounded-lg ${isSpeechEnabled ? "bg-blue-500/10 text-blue-500" : "text-slate-400"}`}
+            >
+              {isSpeechEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
             </button>
           </div>
-        </form>
+
+          {/* Mensajes */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-white dark:bg-[#1d2125] custom-scrollbar">
+            {messages.length === 0 && (
+              <div className="h-full flex flex-col items-center justify-center opacity-20 text-center">
+                <Sparkles size={32} className="mb-2" />
+                <p className="text-[10px] font-bold uppercase">Ask me to create or move tasks</p>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] p-3 rounded-2xl text-xs ${m.role === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-slate-100 dark:bg-[#2c333a] dark:text-gray-200 rounded-bl-none border dark:border-white/5"}`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {isTyping && <div className="text-[10px] text-blue-500 animate-pulse font-bold pl-2">AI is working...</div>}
+          </div>
+
+          {/* Formulario */}
+          <form onSubmit={sendMessage} className="p-4 bg-slate-50 dark:bg-[#22272b] border-t dark:border-white/10">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type a command..."
+                  className="w-full bg-white dark:bg-[#1d2125] border dark:border-white/10 rounded-full pl-5 pr-12 py-2.5 text-xs outline-none focus:border-blue-500"
+                />
+                <button type="button" onClick={startListening} className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${isListening ? "bg-red-500 text-white animate-pulse" : "text-slate-400"}`}>
+                  {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                </button>
+              </div>
+              <button type="submit" className="p-2.5 bg-blue-600 text-white rounded-full"><Send size={16} /></button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
