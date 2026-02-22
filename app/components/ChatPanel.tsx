@@ -97,8 +97,8 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-3 h-9 rounded-xl transition-all border 
           ${isOpen 
-            ? "bg-white/20 border-white/20 text-white" 
-            : "bg-white/5 border-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+            ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20" 
+            : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-white/70 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
           }`}
       >
         <Sparkles size={14} className={isOpen ? "text-blue-400" : "text-blue-400/70"} />
@@ -144,12 +144,18 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
               </div>
             )}
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] p-3 rounded-2xl text-xs ${m.role === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-slate-100 dark:bg-[#2c333a] dark:text-gray-200 rounded-bl-none border dark:border-white/5"}`}>
-                  {m.text}
-                </div>
-              </div>
-            ))}
+  <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+    <div 
+      className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium shadow-sm ${
+        m.role === "user" 
+          ? "bg-blue-600 text-white rounded-br-none" 
+          : "bg-slate-200 dark:bg-[#2c333a] text-slate-900 dark:text-gray-100 rounded-bl-none border border-slate-300 dark:border-white/5"
+      }`}
+    >
+      {m.text}
+    </div>
+  </div>
+))}
             {isTyping && <div className="text-[10px] text-blue-500 animate-pulse font-bold pl-2">AI is working...</div>}
           </div>
 
@@ -162,7 +168,7 @@ export default function ChatPanel({ tasks, onTaskUpdated }: ChatPanelProps) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type a command..."
-                  className="w-full bg-white dark:bg-[#1d2125] border dark:border-white/10 rounded-full pl-5 pr-12 py-2.5 text-xs outline-none focus:border-blue-500"
+                 className="w-full bg-white dark:bg-[#1d2125] border border-slate-200 dark:border-white/10 rounded-full pl-5 pr-12 py-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors"
                 />
                 <button type="button" onClick={startListening} className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${isListening ? "bg-red-500 text-white animate-pulse" : "text-slate-400"}`}>
                   {isListening ? <MicOff size={16} /> : <Mic size={16} />}

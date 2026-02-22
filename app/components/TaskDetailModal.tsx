@@ -2,7 +2,8 @@
 import { ITask } from '@/models/Task';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Trash2, X, CheckCircle2, MessageSquare, Link as LinkIcon, Calendar, Flag, Clock, Plus, Tag } from 'lucide-react';
+import { Trash2, X, CheckCircle2, MessageSquare, Link as LinkIcon, Calendar, Flag, Clock, Plus, Tag, ImageIcon } from 'lucide-react';
+import PrioritySelector from './PrioritySelector';
 
 interface Props {
   task: ITask;
@@ -17,17 +18,14 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
     description: task.description || "",
     priority: task.priority,
     dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "",
-    category: task.category || "General"
+    category: task.category || "General",
+    imageUrl: task.imageUrl || ""
   });
+
   const titleRef = useRef<HTMLTextAreaElement>(null);
-
-
   const [editLink, setEditLink] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-
-
-
 
   useEffect(() => {
     const adjustTitleHeight = () => {
@@ -36,18 +34,15 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
         titleRef.current.style.height = `${titleRef.current.scrollHeight}px`;
       }
     };
-
-    adjustTitleHeight(); // Ajusta al cargar
+    adjustTitleHeight();
     window.addEventListener('resize', adjustTitleHeight);
     return () => window.removeEventListener('resize', adjustTitleHeight);
-  }, [tempTask.title, mounted]); // Se dispara cuando cambia el texto o se monta el modal
-  // Scroll lock and portal mounting
+  }, [tempTask.title, mounted]);
+
   useEffect(() => {
     setMounted(true);
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
+    return () => { document.body.style.overflow = 'unset'; };
   }, []);
 
   if (!mounted) return null;
@@ -63,7 +58,8 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
     tempTask.description !== (task.description || "") ||
     tempTask.priority !== task.priority ||
     tempTask.dueDate !== (task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "") ||
-    tempTask.category !== (task.category || "General");
+    tempTask.category !== (task.category || "General") ||
+    tempTask.imageUrl !== (task.imageUrl || "");
 
   const handleAddLink = async () => {
     if (!editLink.trim()) return;
@@ -104,7 +100,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 w-screen h-screen bg-slate-950/80 backdrop-blur-xl z-[99999] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300"
+      className="fixed inset-0 w-screen h-screen bg-slate-950/90 backdrop-blur-md z-[99999] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300"
       onClick={onClose}
     >
       {showAlert && (
@@ -116,168 +112,203 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
       )}
 
       <div
-        className="bg-white dark:bg-[#0f172a] w-full max-w-6xl h-full max-h-[90vh] rounded-[3rem] shadow-[0_0_80px_rgba(0,0,0,0.4)] border border-slate-200 dark:border-slate-800 relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
+        className="bg-white dark:bg-[#0b1120] w-full max-w-4xl h-full max-h-[80vh] rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-slate-800 relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* CLOSE BUTTON */}
+        {/* BOTÓN CERRAR FLOTANTE */}
         <button
           onClick={onClose}
-          className="absolute top-8 right-8 p-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-rose-500 hover:rotate-90 transition-all duration-300 z-50 shadow-sm"
+          className="absolute top-6 right-6 p-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-rose-500 hover:rotate-90 transition-all duration-300 z-[60] shadow-sm"
         >
-          <X size={24} />
+          <X size={20} />
         </button>
 
-        {/* INTERNAL CONTENT */}
-        <div className="flex-1 overflow-y-auto p-8 md:p-16 custom-scrollbar">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+        {/* CONTENIDO PRINCIPAL CON SCROLL */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="grid grid-cols-1 lg:grid-cols-12 h-full">
 
-            {/* LEFT SIDE: TEXTS */}
-            <div className="lg:col-span-8 space-y-12">
-              <header className="space-y-4 w-full">
+            {/* COLUMNA IZQUIERDA: EDITOR */}
+            <div className="lg:col-span-7 p-8 md:p-14 space-y-10 border-r border-slate-100 dark:border-slate-800/50">
+              <header className="space-y-4">
                 <div className="flex items-center gap-2 text-blue-500 font-black text-[10px] uppercase tracking-[0.3em]">
-                  <Clock size={14} /> Registered on {dateCreated}
+                  <Clock size={14} /> Created {dateCreated}
                 </div>
-
-                <div className="w-full">
-                  <textarea
-                    ref={titleRef}
-                    value={tempTask.title}
-                    onChange={(e) => setTempTask({ ...tempTask, title: e.target.value })}
-                    rows={1}
-                    spellCheck={false}
-                    /* Clases clave:
-                       - text-4xl a text-7xl: Tamaño adaptable
-                       - whitespace-pre-wrap: FUERZA el salto de línea
-                       - break-words: Evita que palabras largas rompan el layout
-                    */
-                    className="w-full bg-transparent border-none outline-none focus:ring-0 resize-none overflow-hidden 
-                 text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white 
-                 placeholder:text-slate-200 leading-[1.1] tracking-tighter py-2
-                 whitespace-pre-wrap break-words block"
-                    placeholder="Task title..."
-                  />
-                </div>
+                <textarea
+                  ref={titleRef}
+                  value={tempTask.title}
+                  onChange={(e) => setTempTask({ ...tempTask, title: e.target.value })}
+                  rows={1}
+                  className="w-full bg-transparent border-none outline-none focus:ring-0 resize-none overflow-hidden text-3xl md:text-5xl font-black text-slate-900 dark:text-white placeholder:text-slate-200 leading-tight tracking-tighter"
+                  placeholder="Task title..."
+                />
               </header>
 
-              <div className="space-y-6">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-3">
-                  <MessageSquare size={20} /> Detailed Description
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                  <MessageSquare size={16} /> Description
                 </label>
                 <textarea
                   value={tempTask.description}
                   onChange={(e) => setTempTask({ ...tempTask, description: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900/50 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-lg outline-none focus:border-blue-500/50 transition-all resize-none min-h-[250px] leading-relaxed shadow-inner"
-                  placeholder="Write project notes here..."
+                  className="w-full bg-slate-50 dark:bg-slate-900/40 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-base outline-none focus:border-blue-500/50 transition-all resize-none min-h-[200px]"
+                  placeholder="Add more details about this task..."
                 />
               </div>
 
-              {/* LINKS SECTION */}
-              <div className="space-y-6">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-3">
-                  <LinkIcon size={20} /> Resources & Links
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                  <LinkIcon size={16} /> Links
                 </label>
-                <div className="grid gap-3">
+                <div className="space-y-2">
                   {task.links?.map((link, i) => (
-                    <div key={i} className="flex items-center gap-4 bg-white dark:bg-slate-900/80 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 group hover:border-blue-500/30 transition-all">
-                      <a href={link} target="_blank" rel="noreferrer" className="flex-1 text-blue-600 dark:text-blue-400 font-bold text-sm truncate">{link}</a>
+                    <div key={i} className="flex items-center gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 group transition-all">
+                      <a href={link} target="_blank" rel="noreferrer" className="flex-1 text-blue-500 font-bold text-sm truncate">{link}</a>
                       <button onClick={() => handleDeleteLink(i)} className="text-slate-300 hover:text-rose-500 transition-colors">
-                        <Trash2 size={20} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   ))}
-                  {/* INPUT TO ADD LINKS */}
-                  <div className="flex gap-3 p-2 bg-slate-50 dark:bg-black/20 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 focus-within:border-blue-500/50 transition-colors">
+                  <div className="flex gap-2 p-1.5 bg-slate-50 dark:bg-black/20 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                     <input
                       type="text"
-                      placeholder="Paste new URL..."
-                      className="flex-1 bg-transparent px-5 text-sm font-bold outline-none text-slate-600 dark:text-slate-200"
+                      placeholder="Add link..."
+                      className="flex-1 bg-transparent px-4 text-sm outline-none text-slate-600 dark:text-slate-200"
                       value={editLink}
                       onChange={(e) => setEditLink(e.target.value)}
                     />
-                    <button onClick={handleAddLink} className="bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-2xl transition-all shadow-lg">
-                      <Plus size={20} />
+                    <button onClick={handleAddLink} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 p-3 rounded-xl hover:scale-105 transition-transform">
+                      <Plus size={18} />
                     </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* RIGHT SIDE: CONFIGURATION & COLORS */}
-            <div className="lg:col-span-4 space-y-8">
-              <div className="bg-slate-50 dark:bg-black/20 p-8 md:p-10 rounded-[3rem] border border-slate-100 dark:border-slate-800 space-y-10">
+            {/* COLUMNA DERECHA: CONFIGURACIÓN */}
+            <div className="lg:col-span-5 bg-slate-50/50 dark:bg-black/10 p-8 md:p-14 space-y-8 overflow-y-auto">
 
-                {/* PRIORITIES WITH COLORS */}
-                <div className="space-y-6">
-                  <h4 className="text-[12px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                    <Flag size={14} />  Priority
-                  </h4>
-                  <div className="flex flex-col gap-3">
-                    {['high', 'medium', 'low'].map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => setTempTask({ ...tempTask, priority: p as any })}
-                        className={`flex items-center justify-between px-6 py-5 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all ${tempTask.priority === p
-                          ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-2xl scale-[1.05]'
-                          : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:border-slate-300'
-                          }`}
-                      >
-                        {p}
-                        {/* Dynamic color circles */}
-                        <div className={`w-3 h-3 rounded-full shadow-sm ${p === 'high' ? 'bg-rose-500' :
-                          p === 'medium' ? 'bg-amber-500' :
-                            'bg-emerald-500'
-                          }`} />
-                      </button>
-                    ))}
-                  </div>
+              {/* PREVIEW DE IMAGEN */}
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2 ml-1">
+                  <ImageIcon size={16} className="text-blue-500/70" />
+                  Cover Image
+                </label>
+
+                {/* Preview de la imagen mejorado */}
+                <div className="relative group aspect-video w-full rounded-[2.5rem] overflow-hidden bg-slate-100 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 transition-all duration-500 hover:border-blue-400/50">
+                  {tempTask.imageUrl ? (
+                    <>
+                      <img src={tempTask.imageUrl} alt="Cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full gap-3">
+                      <div className="p-4 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+                        <ImageIcon size={24} className="text-slate-300 dark:text-slate-600" />
+                      </div>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Image Preview</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-4">
-                  <h4 className="text-[12px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                    <Tag size={14} /> Category
-                  </h4>
+                {/* Input de URL con estilo "Lindo" */}
+                <div className="relative">
                   <input
                     type="text"
-                    value={tempTask.category}
-                    onChange={(e) => setTempTask({ ...tempTask, category: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-5 rounded-2xl text-sm font-black text-slate-700 dark:text-white outline-none focus:ring-4 ring-blue-500/10"
-                    placeholder="General"
+                    placeholder="https://images.unsplash.com/..."
+                    value={tempTask.imageUrl}
+                    onChange={(e) => setTempTask({ ...tempTask, imageUrl: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 
+                 px-5 py-4 rounded-2xl outline-none transition-all duration-300
+                 /* Estética de Texto */
+                 text-sm font-medium text-slate-700 dark:text-slate-200 
+                 placeholder:text-slate-400/50 placeholder:font-normal
+                 /* Foco y sombras */
+                 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 
+                 focus:ring-4 focus:ring-blue-500/10 shadow-sm"
                   />
-                </div>
 
-                <div className="space-y-4">
-                  <h4 className="text-[12px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                    <Calendar size={14} /> Date
-                  </h4>
-                  <input
-                    type="date"
-                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-5 rounded-2xl text-sm font-black text-slate-700 dark:text-white outline-none shadow-sm"
-                    value={tempTask.dueDate}
-                    onChange={(e) => setTempTask({ ...tempTask, dueDate: e.target.value })}
-                  />
+                  {/* Indicador visual de URL válida (opcional) */}
+                  {tempTask.imageUrl && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* ACTION BUTTON */}
+              {/* PRIORIDADES */}
+              <PrioritySelector 
+  selectedPriority={tempTask.priority} 
+  onChange={(val) => setTempTask({ ...tempTask, priority: val })} 
+/>
+              {/* CATEGORÍA Y FECHA */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+                    <Tag size={14} className="text-blue-500/70" />
+                    Category
+                  </label>
+
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      value={tempTask.category}
+                      onChange={(e) => setTempTask({ ...tempTask, category: e.target.value })}
+                      placeholder="Ej: Diseño, Backend..."
+                      className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 
+                 px-5 py-4 rounded-2xl outline-none transition-all duration-300
+                 
+                 /* Estilo del Texto: Aquí está la magia */
+                 text-sm font-semibold text-slate-700 dark:text-slate-100 placeholder:text-slate-400/70
+                 tracking-tight leading-relaxed
+                 
+                 /* Efectos al hacer foco y hover */
+                 hover:border-slate-300 dark:hover:border-slate-600
+                 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 
+                 focus:ring-4 focus:ring-blue-500/10 shadow-sm focus:shadow-md"
+                    />
+
+                    {/* Un detalle estético: línea de brillo inferior solo cuando pasas el mouse */}
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-blue-500 transition-all duration-300 group-focus-within:w-[40%] opacity-50 rounded-full" />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                    <Calendar size={14} /> Due Date
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="date"
+                      value={tempTask.dueDate}
+                      onChange={(e) => setTempTask({ ...tempTask, dueDate: e.target.value })}
+                      onClick={(e) => (e.target as any).showPicker?.()}
+                      // Agregado: text-slate-900 y dark:text-white + color-scheme para el icono nativo
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-4 rounded-2xl text-xs font-bold text-slate-900 dark:text-white outline-none appearance-none cursor-pointer focus:ring-2 ring-blue-500/20 transition-all dark:color-scheme-dark
+        [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                    />
+                    {!tempTask.dueDate && (
+                      <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <Calendar size={14} />
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* BOTÓN GUARDAR */}
               <button
                 onClick={handleSaveChanges}
                 disabled={isSaving || !hasChanges}
-                className={`w-full py-8 rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] transition-all duration-300 ${hasChanges
-                  ? 'bg-blue-600 text-white shadow-xl hover:bg-blue-700 hover:-translate-y-1'
+                className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-[0.3em] transition-all ${hasChanges
+                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20 hover:bg-blue-500 active:scale-95'
                   : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                   }`}
               >
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? "Syncing..." : "Update Task"}
               </button>
             </div>
           </div>
         </div>
-
-        {/* FOOTER */}
-        <footer className="px-12 py-6 bg-slate-50 dark:bg-black/40 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-          <span>Task Master IA </span>
-
-        </footer>
       </div>
     </div>,
     document.body

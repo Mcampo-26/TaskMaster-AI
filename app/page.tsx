@@ -67,7 +67,6 @@ export default function KanbanDashboard() {
   return (
     <div className="flex flex-col h-screen w-full bg-slate-50 dark:bg-[#020617] overflow-hidden font-sans relative transition-colors duration-500">
       
-      {/* NAVBAR CON PROPS DEL CHAT */}
       <Navbar 
         onSearch={setSearchTerm} 
         onOpenForm={() => setIsModalOpen(true)} 
@@ -81,25 +80,35 @@ export default function KanbanDashboard() {
           <p className="font-bold tracking-widest text-sm uppercase">Loading...</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-x-auto p-4 md:p-8 scrollbar-hide">
+        /* Contenedor principal del tablero con padding lateral */
+        <div className="flex-1 overflow-x-auto p-6 md:p-10 scrollbar-hide">
           <DragDropContext onDragEnd={onDragEnd}>
-            <div className="flex gap-4 md:gap-8 items-start h-full min-w-max pb-20">
+            <div className="flex gap-6 md:gap-10 items-start h-full min-w-max pb-10">
               {columns.map(col => (
-                <div key={col.id} className="w-[300px] md:w-[450px] lg:w-[430px] shrink-0 bg-[#f1f2f4] dark:bg-[#101204] rounded-[1.5rem] flex flex-col max-h-full border border-slate-300/40 dark:border-slate-800/50 overflow-hidden">
-                  <div className="p-7 flex flex-col items-center justify-center gap-2">
-                    <h2 className="font-black text-slate-900 dark:text-slate-100 text-[20px] uppercase tracking-[0.2em] text-center">{col.title}</h2>
+                /* COLUMNA: bg suave, bordes redondeados grandes y overflow hidden para el scroll interno */
+                <div key={col.id} className="w-[320px] md:w-[400px] shrink-0 bg-[#f1f2f4] dark:bg-[#101214] rounded-[2rem] flex flex-col max-h-full border border-slate-300/40 dark:border-slate-800/50 shadow-sm overflow-hidden transition-all">
+                  
+                  {/* HEADER DE COLUMNA */}
+                  <div className="pt-8 pb-4 px-8 flex flex-col items-center justify-center gap-2">
+                    <h2 className="font-black text-slate-900 dark:text-slate-100 text-[18px] uppercase tracking-[0.2em] text-center">{col.title}</h2>
                     <span className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] px-3 py-1 rounded-full font-black border border-slate-200 dark:border-slate-700 shadow-sm">
                       {filteredTasks.filter(t => t.status === col.id).length}
                     </span>
                   </div>
 
+                  {/* AREA DROPPABLE: Con scrollbar-hide para que no se vea la barra gris */}
                   <Droppable droppableId={col.id}>
                     {(provided) => (
-                      <div {...provided.droppableProps} ref={provided.innerRef} className="flex-1 overflow-y-auto px-4 min-h-[150px] scrollbar-hide">
+                      <div 
+                        {...provided.droppableProps} 
+                        ref={provided.innerRef} 
+                        className="flex-1 overflow-y-auto px-6 py-2 min-h-[100px] scrollbar-hide"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                      >
                         {filteredTasks.filter(t => t.status === col.id).map((task, index) => (
                           <Draggable key={task._id} draggableId={task._id} index={index}>
                             {(p) => (
-                              <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className="mb-4">
+                              <div ref={p.innerRef} {...p.draggableProps} {...p.dragHandleProps} className="mb-5 outline-none transition-transform">
                                 <TaskCard task={task} index={index} onUpdate={fetchTasks} />
                               </div>
                             )}
@@ -110,8 +119,12 @@ export default function KanbanDashboard() {
                     )}
                   </Droppable>
 
-                  <button onClick={() => setIsModalOpen(true)} className="m-6 p-4 rounded-2xl bg-white/60 dark:bg-slate-800/30 text-slate-500 hover:text-blue-600 flex items-center justify-center gap-3 transition-all font-black text-[10px] uppercase tracking-tighter shadow-sm border border-slate-200 dark:border-transparent">
-                    <Plus size={14} /> Add New Task
+                  {/* BOTÓN INFERIOR */}
+                  <button 
+                    onClick={() => setIsModalOpen(true)} 
+                    className="m-6 p-4 rounded-2xl bg-white/80 dark:bg-slate-800/40 text-slate-500 hover:text-blue-600 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center gap-3 transition-all font-black text-[11px] uppercase tracking-tighter shadow-sm border border-slate-200/50 dark:border-transparent"
+                  >
+                    <Plus size={16} /> Add New Task
                   </button>
                 </div>
               ))}
@@ -122,7 +135,6 @@ export default function KanbanDashboard() {
       
       <Footer />
 
-      {/* EL MODAL TIENE PRIORIDAD VISUAL (Z-INDEX SUPERIOR) */}
       {isModalOpen && <TaskForm onTaskCreated={fetchTasks} onClose={() => setIsModalOpen(false)} />}
     </div>
   );

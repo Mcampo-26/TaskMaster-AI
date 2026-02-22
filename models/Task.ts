@@ -10,9 +10,12 @@ export interface ITask {
   category?: string;
   
   // --- Campos nuevos para el Menú ---
-  links?: string[];        
-  attachments?: string[];  
-  dueDate?: string | Date; // <--- AGREGAMOS ESTO PARA EL CALENDARIO
+  links?: string[];         
+  attachments?: string[];   
+  dueDate?: string | Date; 
+  
+  // --- CAMPO PARA LA PORTADA (NUEVO) ---
+  imageUrl?: string; // <--- AGREGAMOS ESTO PARA RENDERIZAR LA IMAGEN
 
   // --- Campos para la IA ---
   embedding?: number[];

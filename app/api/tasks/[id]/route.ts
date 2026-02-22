@@ -16,23 +16,25 @@ export async function PATCH(
 
     const body = JSON.parse(rawBody);
     
-    // Extraemos todos los posibles campos que queremos permitir
-    const { status, priority, title, description, links, category, aiSummary,dueDate } = body;
+    // 1. AGREGAMOS imageUrl AQUÍ
+    const { status, priority, title, description, links, category, aiSummary, dueDate, imageUrl } = body;
 
     const client = await clientPromise;
     const db = client.db("TaskMasterAI");
 
-    // Construimos el objeto de actualización dinámicamente
     const updateData: any = { updatedAt: new Date() };
     
     if (status !== undefined) updateData.status = status;
     if (priority !== undefined) updateData.priority = priority;
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (links !== undefined) updateData.links = links; // <--- AHORA SÍ SE GUARDA
+    if (links !== undefined) updateData.links = links;
     if (category !== undefined) updateData.category = category;
     if (aiSummary !== undefined) updateData.aiSummary = aiSummary;
     if (dueDate !== undefined) updateData.dueDate = dueDate;
+    
+    // 2. AGREGAMOS LA CONDICIÓN PARA GUARDAR LA IMAGEN
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
 
     const result = await db.collection("tasks").updateOne(
       { _id: new ObjectId(id) },
