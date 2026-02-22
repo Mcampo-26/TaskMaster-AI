@@ -100,7 +100,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 w-screen h-screen bg-slate-950/90 backdrop-blur-md z-[99999] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300"
+      className="fixed inset-0 w-screen h-screen bg-slate-950/90 backdrop-blur-md z-[99999] flex items-center justify-center p-0 md:p-6 animate-in fade-in duration-300"
       onClick={onClose}
     >
       {showAlert && (
@@ -111,28 +111,28 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
         </div>
       )}
 
-<div
-  className="bg-white dark:bg-[#0b1120] w-full max-w-4xl 
-             h-full md:h-[90vh] md:max-h-[850px] 
-             rounded-none md:rounded-[2.5rem] 
-             shadow-2xl border-none md:border md:border-slate-200 dark:md:border-slate-800 
-             relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
-  onClick={(e) => e.stopPropagation()}
->
-        {/* BOTÓN CERRAR FLOTANTE */}
+      <div
+        className="bg-white dark:bg-[#0b1120] w-full max-w-4xl 
+                   h-full md:h-auto md:max-h-[90vh] 
+                   rounded-none md:rounded-[2.5rem] 
+                   shadow-2xl border-none md:border md:border-slate-200 dark:md:border-slate-800 
+                   relative flex flex-col overflow-hidden animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* BOTÓN CERRAR FLOTANTE - Fijo y con mayor visibilidad */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-rose-500 hover:rotate-90 transition-all duration-300 z-[60] shadow-sm"
+          className="absolute top-4 right-4 p-3 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-md text-slate-500 hover:text-rose-500 hover:rotate-90 transition-all duration-300 z-[100] shadow-xl border border-slate-200 dark:border-slate-700"
         >
           <X size={20} />
         </button>
 
-        {/* CONTENIDO PRINCIPAL CON SCROLL */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 lg:grid-cols-12 h-full">
+        {/* CONTENEDOR DE SCROLL ÚNICO - Se asegura de que todo sea accesible */}
+        <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y custom-scrollbar">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 min-h-full">
 
             {/* COLUMNA IZQUIERDA: EDITOR */}
-            <div className="lg:col-span-7 p-8 md:p-14 space-y-10 border-r border-slate-100 dark:border-slate-800/50">
+            <div className="lg:col-span-7 p-8 md:p-14 space-y-10 border-b lg:border-b-0 lg:border-r border-slate-100 dark:border-slate-800/50">
               <header className="space-y-4">
                 <div className="flex items-center gap-2 text-blue-500 font-black text-[10px] uppercase tracking-[0.3em]">
                   <Clock size={14} /> Created {dateCreated}
@@ -154,7 +154,7 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
                 <textarea
                   value={tempTask.description}
                   onChange={(e) => setTempTask({ ...tempTask, description: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900/40 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-base outline-none focus:border-blue-500/50 transition-all resize-none min-h-[200px]"
+                  className="w-full bg-slate-50 dark:bg-slate-900/40 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-base outline-none focus:border-blue-500/50 transition-all resize-none min-h-[180px]"
                   placeholder="Add more details about this task..."
                 />
               </div>
@@ -188,128 +188,76 @@ export default function TaskDetailModal({ task, onClose, onUpdate }: Props) {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: CONFIGURACIÓN */}
-            <div className="lg:col-span-5 bg-slate-50/50 dark:bg-black/10 p-8 md:p-14 space-y-8 overflow-y-auto">
-
-              {/* PREVIEW DE IMAGEN */}
+            {/* COLUMNA DERECHA: CONFIGURACIÓN - Con Padding Extra para Mobile */}
+            <div className="lg:col-span-5 bg-slate-50/50 dark:bg-black/10 p-8 md:p-14 space-y-8 pb-32 md:pb-14">
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2 ml-1">
                   <ImageIcon size={16} className="text-blue-500/70" />
                   Cover Image
                 </label>
-
-                {/* Preview de la imagen mejorado */}
                 <div className="relative group aspect-video w-full rounded-[2.5rem] overflow-hidden bg-slate-100 dark:bg-slate-900/50 border-2 border-dashed border-slate-200 dark:border-slate-800 transition-all duration-500 hover:border-blue-400/50">
                   {tempTask.imageUrl ? (
-                    <>
-                      <img src={tempTask.imageUrl} alt="Cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                    </>
+                    <img src={tempTask.imageUrl} alt="Cover" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full gap-3">
-                      <div className="p-4 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
-                        <ImageIcon size={24} className="text-slate-300 dark:text-slate-600" />
-                      </div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Image Preview</span>
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
+                      <ImageIcon size={24} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">No Preview</span>
                     </div>
                   )}
                 </div>
-
-                {/* Input de URL con estilo "Lindo" */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="https://images.unsplash.com/..."
-                    value={tempTask.imageUrl}
-                    onChange={(e) => setTempTask({ ...tempTask, imageUrl: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 
-                 px-5 py-4 rounded-2xl outline-none transition-all duration-300
-                 /* Estética de Texto */
-                 text-sm font-medium text-slate-700 dark:text-slate-200 
-                 placeholder:text-slate-400/50 placeholder:font-normal
-                 /* Foco y sombras */
-                 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 
-                 focus:ring-4 focus:ring-blue-500/10 shadow-sm"
-                  />
-
-                  {/* Indicador visual de URL válida (opcional) */}
-                  {tempTask.imageUrl && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    </div>
-                  )}
-                </div>
+                <input
+                  type="text"
+                  placeholder="https://image-url.com"
+                  value={tempTask.imageUrl}
+                  onChange={(e) => setTempTask({ ...tempTask, imageUrl: e.target.value })}
+                  className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 px-5 py-4 rounded-2xl outline-none text-sm text-slate-600 dark:text-slate-200"
+                />
               </div>
 
-              {/* PRIORIDADES */}
               <PrioritySelector 
-  selectedPriority={tempTask.priority} 
-  onChange={(val) => setTempTask({ ...tempTask, priority: val })} 
-/>
-              {/* CATEGORÍA Y FECHA */}
-              <div className="grid grid-cols-2 gap-4">
+                selectedPriority={tempTask.priority} 
+                onChange={(val) => setTempTask({ ...tempTask, priority: val })} 
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
-                    <Tag size={14} className="text-blue-500/70" />
-                    Category
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Tag size={14} /> Category
                   </label>
-
-                  <div className="relative group">
-                    <input
-                      type="text"
-                      value={tempTask.category}
-                      onChange={(e) => setTempTask({ ...tempTask, category: e.target.value })}
-                      placeholder="Ej: Diseño, Backend..."
-                      className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 
-                 px-5 py-4 rounded-2xl outline-none transition-all duration-300
-                 
-                 /* Estilo del Texto: Aquí está la magia */
-                 text-sm font-semibold text-slate-700 dark:text-slate-100 placeholder:text-slate-400/70
-                 tracking-tight leading-relaxed
-                 
-                 /* Efectos al hacer foco y hover */
-                 hover:border-slate-300 dark:hover:border-slate-600
-                 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500/50 
-                 focus:ring-4 focus:ring-blue-500/10 shadow-sm focus:shadow-md"
-                    />
-
-                    {/* Un detalle estético: línea de brillo inferior solo cuando pasas el mouse */}
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-blue-500 transition-all duration-300 group-focus-within:w-[40%] opacity-50 rounded-full" />
-                  </div>
+                  <input
+                    type="text"
+                    value={tempTask.category}
+                    onChange={(e) => setTempTask({ ...tempTask, category: e.target.value })}
+                    className="w-full bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-5 py-4 rounded-2xl outline-none text-sm font-semibold"
+                  />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
                     <Calendar size={14} /> Due Date
                   </label>
-                  <div className="relative group">
-                    <input
-                      type="date"
-                      value={tempTask.dueDate}
-                      onChange={(e) => setTempTask({ ...tempTask, dueDate: e.target.value })}
-                      onClick={(e) => (e.target as any).showPicker?.()}
-                      // Agregado: text-slate-900 y dark:text-white + color-scheme para el icono nativo
-                      className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-4 rounded-2xl text-xs font-bold text-slate-900 dark:text-white outline-none appearance-none cursor-pointer focus:ring-2 ring-blue-500/20 transition-all dark:color-scheme-dark
-        [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                    />
-                    {!tempTask.dueDate && (
-                      <span className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <Calendar size={14} />
-                      </span>
-                    )}
-                  </div>
+                  <input
+                    type="date"
+                    value={tempTask.dueDate}
+                    onChange={(e) => setTempTask({ ...tempTask, dueDate: e.target.value })}
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-4 rounded-2xl text-xs font-bold dark:text-white outline-none"
+                  />
                 </div>
               </div>
-              {/* BOTÓN GUARDAR */}
-              <button
-                onClick={handleSaveChanges}
-                disabled={isSaving || !hasChanges}
-                className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-[0.3em] transition-all ${hasChanges
-                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20 hover:bg-blue-500 active:scale-95'
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+
+              {/* BOTÓN ACTUALIZAR */}
+              <div className="pt-6">
+                <button
+                  onClick={handleSaveChanges}
+                  disabled={isSaving || !hasChanges}
+                  className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-[0.3em] transition-all shadow-2xl ${
+                    hasChanges
+                    ? 'bg-blue-600 text-white shadow-blue-500/40 active:scale-95'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
                   }`}
-              >
-                {isSaving ? "Syncing..." : "Update Task"}
-              </button>
+                >
+                  {isSaving ? "Syncing..." : "Update Task"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
